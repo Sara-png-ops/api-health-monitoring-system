@@ -1,115 +1,163 @@
 # API Health Monitoring System
 
-A Streamlit dashboard for checking whether API endpoints are reachable, how fast they respond, and how that changes over time. Every check sends a real HTTP GET request, and every result is stored in a local SQLite database.
+A Python-based API Health Monitoring System with a Streamlit dashboard. It checks whether API endpoints are reachable, measures their response times, tracks their status, and stores monitoring history in a local SQLite database.
 
-**Checks run only when you press "Run checks now".** The app does not monitor in the background, so the history contains only the checks you started yourself.
+**Important:** Checks run only when you click **Run checks now**. The application does not perform background monitoring.
 
 ## Features
 
-- Add endpoints by URL, with validation before anything is requested. Remove endpoints at any time.
-- Sample public endpoints, clearly labelled, one of which fails on purpose so you can see an unhealthy result.
-- Real HTTP GET requests with a 10-second timeout.
-- For each check: HTTP status code, result (Healthy, Unhealthy or Error), response time in milliseconds and a UTC timestamp.
-- Dashboard cards for endpoints checked, healthy, unhealthy and error counts, a status table and a latest-response-time chart.
-- Persistent history in SQLite, a response-time trend chart and a filter by endpoint.
-- Downloadable CSV report with the endpoint URL, timestamp, HTTP status, response time and result.
+- Add and remove API endpoints.
+- Validate URLs before sending requests.
+- Check API availability using HTTP GET requests.
+- Measure API response time in milliseconds.
+- Display HTTP status codes and health status.
+- Classify endpoints as Healthy, Unhealthy, or Error.
+- Display dashboard statistics and response-time charts.
+- Store monitoring history using SQLite.
+- View historical monitoring results.
+- Filter monitoring history by endpoint.
+- Download monitoring reports as CSV files.
+- Use a 10-second request timeout.
 
-## How results are classified
+## Technologies Used
 
-| Result | Meaning |
-| --- | --- |
-| Healthy | The final HTTP status is 200-399. Redirects are followed. |
-| Unhealthy | The server replied with a 4xx or 5xx status. |
-| Error | No response was received: timeout, DNS or connection failure, SSL problem, redirect loop or invalid URL. |
+- Python
+- Streamlit
+- Requests
+- SQLite
+- Pandas
+- Plotly
+- Pytest
 
-**Response time** is measured from just before the request is sent until the response headers arrive (DNS, connection, TLS and server processing). The response body is never downloaded. Failed requests have no response time.
+## Project Structure
 
-No uptime percentages or other statistics are invented. The dashboard only counts and plots checks that are stored in the database.
-
-## Technologies used
-
-- Python 3.10 or newer
-- Streamlit (dashboard)
-- Requests (HTTP checks)
-- SQLite (history, via Python's built-in `sqlite3`)
-- Pandas (tables)
-- Plotly (charts)
-- Pytest (tests)
-
-## Project structure
-
-```
+```text
 api-health-monitoring-system/
-├── app.py                  Streamlit dashboard
-├── api_monitor.py          URL validation, HTTP checks, CSV report
-├── database.py             SQLite storage
-├── requirements.txt
-├── README.md
+│
+├── .streamlit/
+│   └── config.toml
+│
+├── tests/
+│   └── test_api_monitor.py
+│
+├── Screenshots/
+│   ├── dashboard.png
+│   ├── api-analysis.png
+│   └── monitoring-results.png
+│
 ├── .gitignore
-├── .streamlit/config.toml  Lavender theme
-├── screenshots/            Put your screenshots here
-└── tests/
-    └── test_api_monitor.py
+├── README.md
+├── api_monitor.py
+├── app.py
+├── database.py
+└── requirements.txt
 ```
 
-The database file `monitoring.db` is created in the project folder the first time you run the app. It is ignored by Git.
+The `monitoring.db` database is created automatically when the application runs. It is intended to remain local and is excluded from Git.
 
 ## Installation
 
+Clone the repository:
+
 ```bash
-git clone https://github.com/<your-username>/api-health-monitoring-system.git
+git clone https://github.com/Sara-png-ops/api-health-monitoring-system.git
+```
+
+Move into the project directory:
+
+```bash
 cd api-health-monitoring-system
-
-python -m venv .venv
-.venv\Scripts\activate          # Windows
-source .venv/bin/activate       # macOS / Linux
-
-pip install -r requirements.txt
 ```
 
-## Running the application
+Install the required dependencies:
 
 ```bash
-streamlit run app.py
+python -m pip install -r requirements.txt
 ```
 
-Open the address Streamlit prints (normally http://localhost:8501), then:
+## Running the Application
 
-1. Add an endpoint in the sidebar, or open **Sample public endpoints** and select **Add all sample endpoints**.
-2. Press **Run checks now**.
-3. Review the **Overview** tab, then open **History and report** to filter by endpoint, view the trend and download the CSV.
+Run the following command:
 
-## Running the tests
+```bash
+python -m streamlit run app.py
+```
+
+Open the local URL displayed in your terminal, usually:
+
+```text
+http://localhost:8501
+```
+
+### How to Use
+
+1. Open the application.
+2. Add an API endpoint using its name and URL.
+3. Click **Add Endpoint**.
+4. Click **Run checks now** to test the endpoint.
+5. Review the endpoint status and response time.
+6. Open the history section to view previous checks.
+7. Download the monitoring report as a CSV file.
+
+## Screenshots
+
+### Dashboard Overview
+
+![Dashboard Overview](Screenshots/dashboard.png)
+
+### API Analysis
+
+![API Analysis](Screenshots/api-analysis.png)
+
+### Monitoring Results
+
+![Monitoring Results](Screenshots/monitoring-results.png)
+
+## Running Tests
+
+Run the following command:
 
 ```bash
 python -m pytest -v
 ```
 
-The tests mock HTTP responses and never contact external APIs. A few tests send real requests to a temporary server on `127.0.0.1` to confirm that genuine status codes, timeouts and timing are handled correctly. A dashboard test drives the Streamlit app through adding, checking and removing endpoints.
+The tests check the API monitoring functionality, including URL validation and HTTP response handling.
 
-## Screenshots
+## How Results Are Classified
 
-After running the app, save screenshots into the `screenshots/` folder and link them here:
+| Status | Meaning |
+|---|---|
+| Healthy | API returns an HTTP status code between 200 and 399. |
+| Unhealthy | API returns an HTTP status code between 400 and 599. |
+| Error | Request fails because of a timeout, connection issue, DNS problem, or other request error. |
 
-```markdown
-![Overview](screenshots/overview.png)
-![History and report](screenshots/history.png)
-```
+## Security Considerations
 
-## Security notes
-
-- URLs are stored in plain text, so the app rejects URLs containing a username, a password or a query parameter such as `api_key`, `token` or `secret`.
-- Requests send only a `User-Agent` header. No custom headers or credentials are supported or stored.
-- CSV cells that start with `=`, `+`, `-` or `@` are prefixed with an apostrophe so spreadsheet programs do not run them as formulas.
+- URLs are validated before requests are sent.
+- URLs containing credentials or sensitive query parameters are rejected.
+- Requests use a 10-second timeout.
+- CSV reports protect against spreadsheet formula injection.
+- No API credentials are stored by the application.
 
 ## Limitations
 
-- Checks are manual. There is no scheduler or background monitoring.
-- Only HTTP GET requests are supported, with no custom headers, authentication or request bodies. Endpoints that require credentials cannot be monitored.
-- A healthy result means the server returned a 2xx or 3xx status. The response content is not inspected.
-- Response time excludes downloading the response body and reflects your own network connection, not the endpoint's global performance.
-- Timestamps are in UTC.
-- The history table loads the 1,000 most recent checks. The CSV report contains the same rows.
-- Removing an endpoint also deletes its history.
-- The database is a local file, which suits one user on one machine and is not designed for several users at once.
-- The app can request any HTTP or HTTPS address, including `localhost` and private network addresses. Run it only on a machine you trust and do not deploy it publicly without adding restrictions.
+- Monitoring is manual and does not run in the background.
+- Only HTTP GET requests are supported.
+- APIs requiring authentication are not supported.
+- Response content is not inspected.
+- Monitoring history is stored in a local SQLite database.
+- Response times depend partly on the user's internet connection.
+
+## Future Improvements
+
+- Scheduled automatic API monitoring.
+- Email notifications for failed endpoints.
+- Additional HTTP methods such as POST and PUT.
+- Support for authenticated API endpoints.
+- More detailed monitoring analytics.
+
+---
+
+**Developed by Sara Subhan**
+
+
